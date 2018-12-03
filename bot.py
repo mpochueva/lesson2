@@ -2,6 +2,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from confbot import key_bot_api
 import logging
 import ephem
+from datetime import datetime
 
 
 # Настройки прокси
@@ -12,11 +13,12 @@ logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
                     filename='bot.log'
                     )
 
+
 def main():
     mybot = Updater(key_bot_api, request_kwargs=PROXY)
     dp = mybot.dispatcher
     dp.add_handler(CommandHandler("start", greet_user))
-    dp.add_handler(CommandHandler("planet", planet))
+    dp.add_handler(CommandHandler("planet", get_constellation))
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
     mybot.start_polling()
     mybot.idle()
@@ -34,14 +36,31 @@ def talk_to_me(bot, update):
     update.message.reply_text(user_text)
 
 
-def planet(bot, update):
+def get_planet_list():
+    planet_list = []
+    for pnum, ptype, pname in ephem._libastro.builtin_planets():
+        if ptype == "Planet":
+            planet_list.append(pname)
+    print(planet_list)
+    return planet_list
+
+
+def get_constellation(bot, update):
+    planet_list = get_planet_list()
     user_text = update.message.text
-    planet_name = user_text.split()
-    print(planet_name)
-    mars = ephem.Mars('2016/09/23')
-    print(ephem.constellation(mars))
-    update.message.reply_text(planet_name)
-    update.message.reply_text(ephem.constellation(mars))
+    now = datetime.strftime(datetime.now(), "%Y/%m/%d")
+    planet_name = user_text.split()[1].capitalize()
+    if planet_name in planet_list:
+        print(now)
+        print(planet_name)
+        constellation = getattr(ephem, planet_name)(now)
+        print(ephem.constellation(constellation))
+        update.message.reply_text(planet_name)
+        update.message.reply_text("Planet " + planet_name + " is in the " +
+                                  ephem.constellation(constellation)[1] + " constellation today")
+    else:
+        update.message.reply_text("The name entered is not a planet name. Please try again "
+                                  "using the names from the list: {}".format(', '.join(planet_list)))
 
 
 main()
