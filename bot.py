@@ -41,7 +41,6 @@ def get_planet_list():
     for pnum, ptype, pname in ephem._libastro.builtin_planets():
         if ptype == "Planet":
             planet_list.append(pname)
-    print(planet_list)
     return planet_list
 
 
@@ -51,11 +50,7 @@ def get_constellation(bot, update):
     now = datetime.strftime(datetime.now(), "%Y/%m/%d")
     planet_name = user_text.split()[1].capitalize()
     if planet_name in planet_list:
-        print(now)
-        print(planet_name)
         constellation = getattr(ephem, planet_name)(now)
-        print(ephem.constellation(constellation))
-        update.message.reply_text(planet_name)
         update.message.reply_text("Planet " + planet_name + " is in the " +
                                   ephem.constellation(constellation)[1] + " constellation today")
     else:
